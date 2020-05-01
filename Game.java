@@ -275,30 +275,6 @@ public class Game {
 		}
 		draw();
 	}
-	private void aiMoves(int p) {
-		draw();
-		// NOCOM dummy AI
-		if (roundStarter == p) {
-			playing[p] = players[p].hand.remove(0);
-		} else {
-			for (Card c : players[p].hand) {
-				if (c.color == playing[roundStarter].color) {
-					playing[p] = c;
-					players[p].hand.remove(c);
-					break;
-				}
-			}
-			if (playing[p] == null) {
-				playing[p] = players[p].hand.remove(0);
-			}
-		}
-		draw();
-		if ((p + 1) % players.length == roundStarter) {
-			endOfTrick = true;
-		} else if (p + 1 != players.length) {
-			aiMoves(p + 1);
-		}
-	}
 	
 	public Game() {
 		
@@ -413,6 +389,123 @@ public class Game {
 		frame.setVisible(true);
 		
 		dealCards();
+	}
+
+	// TODO this AI is a fairly stupid dummy
+	private void aiMoves(int p) {
+		draw();
+
+		Card cardToPlay = null;
+		if (roundStarter == p) {
+			// NOCOM
+			cardToPlay = players[p].hand.get(0);
+		} else {
+			boolean canFollow = false;
+			for (Card c : players[p].hand) {
+				if (c.color == playing[roundStarter].color) {
+					canFollow = true;
+					break;
+				}
+			}
+			if (canFollow) {
+				int highestPlayed = -1;
+				int cardsMissing = 0;
+				for (Card c : playing) {
+					if (c == null) {
+						++cardsMissing;
+					} else if (c.color == playing[roundStarter].color) {
+						if (highestPlayed < 0 || highestPlayed < c.value.ordinal()) {
+							highestPlayed = c.value.ordinal();
+						}
+					}
+				}
+				Card highestBelowValue = null;
+				Card highestOwn = null;
+				Card lowestOwn = null;
+				for (Card c : players[p].hand) {
+					if (c.color == playing[roundStarter].color) {
+						if (c.value.ordinal() < highestPlayed && (highestBelowValue == null || highestBelowValue.value.ordinal() < c.value.ordinal())) {
+							highestBelowValue = c;
+						}
+						if (highestOwn == null || highestOwn.value.ordinal() < c.value.ordinal()) {
+							highestOwn = c;
+						}
+						if (lowestOwn == null || lowestOwn.value.ordinal() > c.value.ordinal()) {
+							lowestOwn = c;
+						}
+					}
+				}
+				if (highestBelowValue != null) {
+					cardToPlay = highestBelowValue;
+				} else if (cardsMissing > 1) {
+					cardToPlay = lowestOwn;
+				} else {
+					cardToPlay = highestOwn;
+				}
+			} else {
+				boolean pointCardsAllowed = playing[roundStarter].value != Card.Value.Two || playing[roundStarter].color != Card.Color.Clubs;
+				boolean mayPlayHearts = false;
+				Card canPlayQueenOfSpades = null;
+				if (pointCardsAllowed) {
+					boolean haveOtherThanHearts = false;
+					for (Card c : players[p].hand) {
+						if (c.color == Card.Color.Spades && c.value == Card.Value.Queen) {
+							canPlayQueenOfSpades = c;
+						}
+						if (c.color != Card.Color.Hearts) {
+							haveOtherThanHearts = true;
+						}
+					}
+					if (haveOtherThanHearts) {
+						int heartsLeftTotal = 0;
+						for (Player pl : players) {
+							for (Card c : pl.hand) {
+								if (c.color == Card.Color.Hearts) {
+									++heartsLeftTotal;
+								}
+							}
+						}
+						if (heartsLeftTotal < 13) {
+							mayPlayHearts = true;
+						}
+					} else {
+						mayPlayHearts = true;
+					}
+				}
+				if (canPlayQueenOfSpades != null) {
+					cardToPlay = canPlayQueenOfSpades;  // hehehe
+				} else {
+					int score = 0;
+					for (Card c : players[p].hand) {
+						int s = 0;
+						switch (c.color) {
+							case Hearts:
+								s = mayPlayHearts ? (c.value.ordinal() + 1) * 8 : -1;
+								break;
+							case Spades:
+								s = c.value.ordinal() > Card.Value.Queen.ordinal() ? c.value.ordinal() * 20 : c.value.ordinal() + 1;
+								break;
+							default:
+								s = (c.value.ordinal() + 1) * 3;
+								break;
+						}
+						if (s >= score) {
+							score = s;
+							cardToPlay = c;
+						}
+					}
+				}
+			}
+		}
+
+		playing[p] = cardToPlay;
+		players[p].hand.remove(cardToPlay);
+		draw();
+		if ((p + 1) % players.length == roundStarter) {
+			endOfTrick = true;
+		} else if (p + 1 != players.length) {
+			aiMoves(p + 1);
+		}
 	}
 
 	public static void main(String[] args) {

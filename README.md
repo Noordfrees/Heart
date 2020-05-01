@@ -23,6 +23,7 @@ Manual not yet written, sorry :(
 ## Credits
 
 Created by [Benedikt Straub (@Noordfrees)](https://github.com/Noordfrees) in his spare time. I hope you like my work.
+
 The card images are edited versions of a card set distributed with [Aisleriot](https://wiki.gnome.org/Apps/Aisleriot).
 
 ## License
