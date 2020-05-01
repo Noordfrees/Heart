@@ -310,6 +310,9 @@ public class Game {
 					for (int i = cardRects.size() - 1; i >= 0; --i) {
 						if (cardRects.get(i).contains(m.getPoint())) {
 							Card card = players[0].hand.get(i);
+							if (i != 0 && players[0].hand.get(0).value == Card.Value.Two && players[0].hand.get(0).color == Card.Color.Clubs) {
+								continue;  // NOT ALLOWED to start the first trick with anything other than the two of clubs
+							}
 							if (card.value != Card.Value.Two || card.color != Card.Color.Clubs) {
 								if (roundStarter == 0) {
 									if (card.color == Card.Color.Hearts) {
@@ -444,52 +447,33 @@ public class Game {
 				}
 			} else {
 				boolean pointCardsAllowed = playing[roundStarter].value != Card.Value.Two || playing[roundStarter].color != Card.Color.Clubs;
-				boolean mayPlayHearts = false;
-				Card canPlayQueenOfSpades = null;
-				if (pointCardsAllowed) {
-					boolean haveOtherThanHearts = false;
-					for (Card c : players[p].hand) {
-						if (c.color == Card.Color.Spades && c.value == Card.Value.Queen) {
-							canPlayQueenOfSpades = c;
-						}
-						if (c.color != Card.Color.Hearts) {
-							haveOtherThanHearts = true;
-						}
-					}
-					if (haveOtherThanHearts) {
-						int heartsLeftTotal = 0;
-						for (Player pl : players) {
-							for (Card c : pl.hand) {
-								if (c.color == Card.Color.Hearts) {
-									++heartsLeftTotal;
-								}
-							}
-						}
-						if (heartsLeftTotal < 13) {
-							mayPlayHearts = true;
-						}
-					} else {
-						mayPlayHearts = true;
+				Card queenOfSpades = null;
+				for (Card c : players[p].hand) {
+					if (c.color == Card.Color.Spades && c.value == Card.Value.Queen) {
+						queenOfSpades = c;
+						break;
 					}
 				}
-				if (canPlayQueenOfSpades != null) {
-					cardToPlay = canPlayQueenOfSpades;  // hehehe
+				if (queenOfSpades != null && pointCardsAllowed) {
+					cardToPlay = queenOfSpades;  // hehehe
 				} else {
 					int score = 0;
 					for (Card c : players[p].hand) {
 						int s = 0;
 						switch (c.color) {
 							case Hearts:
-								s = mayPlayHearts ? (c.value.ordinal() + 1) * 8 : -1;
+								s = pointCardsAllowed ? (c.value.ordinal() + 1) * 8 :
+										-2 - c.value.ordinal() /* not allowed unless we have nothing else */;
 								break;
 							case Spades:
-								s = c.value.ordinal() > Card.Value.Queen.ordinal() ? c.value.ordinal() * 20 : c.value.ordinal() + 1;
+								s = c == queenOfSpades ? -1 /* not allowed unless we have nothing else */ :
+										c.value.ordinal() > Card.Value.Queen.ordinal() ? c.value.ordinal() * 20 : c.value.ordinal() + 1;
 								break;
 							default:
 								s = (c.value.ordinal() + 1) * 3;
 								break;
 						}
-						if (s >= score) {
+						if (s >= score || cardToPlay == null) {
 							score = s;
 							cardToPlay = c;
 						}
