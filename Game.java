@@ -100,6 +100,9 @@ public class Game {
 	private final Card[] playing;
 	private boolean endOfTrick;
 	
+	private int passCards;
+	private Card[][] cardsPassed;
+	
 	private ArrayList<Rectangle> cardRects;
 	
 	public synchronized void draw() {
@@ -127,30 +130,38 @@ public class Game {
 		int cardOff = (w - cardW * players[0].hand.size()) / 2;
 		int idx = 0;
 		g.setColor(new Color(0x3f000000, true));
+		boolean allSel = true;
+		if (cardsPassed != null) { for (Card c : cardsPassed[0]) { if (null == c) { allSel = false; break; }}}
 		for (Card card : players[0].hand) {
-			Rectangle r = new Rectangle(cardOff + cardW * (idx++), h - 2 * cardH, cardW, cardH);
+			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[0]) { if (card == c) { sel = true; break; }}}
+			Rectangle r = new Rectangle(cardOff + cardW * (idx++), h - 2 * cardH - (sel ? cardH / 3 : 0), cardW, cardH);
 			cardRects.add(r);
 			g.drawImage(Toolkit.getDefaultToolkit().getImage(
 					"images/" + card.color.name().toLowerCase() + "_" + card.value.name().toLowerCase() + ".png"),
 				r.x, r.y, r.width, r.height, null);
-			if (!mayPlay(card, 0)) {
+			if (cardsPassed == null ? !mayPlay(card, 0) : (allSel && !sel)) {
 				g.fill(r);
 			}
 		}
 		cardOff = (w + cardW * players[2].hand.size()) / 2;
 		idx = 0;
 		for (Card card : players[2].hand) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), cardOff - cardW * (++idx), cardH, cardW, cardH, null);
+			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[2]) { if (card == c) { sel = true; break; }}}
+			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), cardOff - cardW * (++idx), cardH + (sel ? cardH / 3 : 0), cardW, cardH, null);
 		}
 		cardOff = (2 * h - cardH * players[1].hand.size()) / 4;
 		idx = 0;
 		for (Card card : players[1].hand) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), cardW, cardOff + cardH * (idx++) / 2, cardW, cardH, null);
+			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[1]) { if (card == c) { sel = true; break; }}}
+			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), cardW + (sel ? cardW / 3 : 0),
+					cardOff + cardH * (idx++) / 2, cardW, cardH, null);
 		}
 		cardOff = (2 * h + cardH * players[3].hand.size()) / 4;
 		idx = 0;
 		for (Card card : players[3].hand) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), w - 2 * cardW, cardOff - cardH * (++idx) / 2, cardW, cardH, null);
+			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[3]) { if (card == c) { sel = true; break; }}}
+			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), w - 2 * cardW - (sel ? cardW / 3 : 0),
+					cardOff - cardH * (++idx) / 2, cardW, cardH, null);
 		}
 		
 		int activePlayer = -1;
@@ -182,28 +193,41 @@ public class Game {
 			g.drawString(str, p.x, p.y);
 		}
 		
-		if (playing[0] != null) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage(
-					"images/" + playing[0].color.name().toLowerCase() + "_" + playing[0].value.name().toLowerCase() + ".png"),
-				(w - cardW) / 2, (h + cardH) / 2, cardW, cardH, null);
+		Rectangle[] playingPos = new Rectangle[] {
+			new Rectangle((w - cardW) / 2, (h + cardH) / 2, cardW, cardH),
+			new Rectangle((w - 4 * cardW) / 2, (h - cardH) / 2, cardW, cardH),
+			new Rectangle((w - cardW) / 2, (h - 3 * cardH) / 2, cardW, cardH),
+			new Rectangle((w + 2 * cardW) / 2, (h - cardH) / 2, cardW, cardH)
+		};
+		g.setColor(new Color(0xcccccc));
+		if (cardsPassed != null) {
+			switch (passCards) {
+				case 1:
+					g.fillPolygon(
+							new int[] { w / 2 + cardW / 3, w / 2 + cardW / 3, w / 2 - cardW / 3 },
+							new int[] { h / 2 - cardH / 4, h / 2 + cardH / 4, h / 2 },
+						3); break;
+				case 3:
+					g.fillPolygon(
+							new int[] { w / 2 - cardW / 3, w / 2 - cardW / 3, w / 2 + cardW / 3 },
+							new int[] { h / 2 - cardH / 4, h / 2 + cardH / 4, h / 2 },
+						3); break;
+				case 2:
+					g.fillPolygon(
+							new int[] { w / 2 - cardW / 3, w / 2 + cardW / 3, w / 2 },
+							new int[] { h / 2 + cardH / 4, h / 2 + cardH / 4, h / 2 - cardH / 4 },
+						3); break;
+				default: break;
+			}
 		}
-		if (playing[2] != null) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage(
-					"images/" + playing[2].color.name().toLowerCase() + "_" + playing[2].value.name().toLowerCase() + ".png"),
-				(w - cardW) / 2, (h - 3 * cardH) / 2, cardW, cardH, null);
+		for (int i = 0; i < playing.length; ++i) {
+			g.draw(playingPos[i]);
+			if (playing[i] != null) {
+				g.drawImage(Toolkit.getDefaultToolkit().getImage(
+						"images/" + playing[i].color.name().toLowerCase() + "_" + playing[i].value.name().toLowerCase() + ".png"),
+					playingPos[i].x, playingPos[i].y, playingPos[i].width, playingPos[i].height, null);
+			}
 		}
-		if (playing[1] != null) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage(
-					"images/" + playing[1].color.name().toLowerCase() + "_" + playing[1].value.name().toLowerCase() + ".png"),
-				(w - 3 * cardW) / 2, (h - cardH) / 2, cardW, cardH, null);
-		}
-		if (playing[3] != null) {
-			g.drawImage(Toolkit.getDefaultToolkit().getImage(
-					"images/" + playing[3].color.name().toLowerCase() + "_" + playing[3].value.name().toLowerCase() + ".png"),
-				(w + cardW) / 2, (h - cardH) / 2, cardW, cardH, null);
-		}
-		
-		
 		
 		display.setIcon(new ImageIcon(img));
 		
@@ -228,7 +252,11 @@ public class Game {
 				++i;
 			}
 		}
-		if (roundStarter != 0) {
+		if (cardsPassed != null) {
+			for (int i = 1; i < players.length; ++i) {
+				aiPass(i);
+			}
+		} else if (roundStarter != 0) {
 			aiMoves(roundStarter);
 		}
 	}
@@ -337,9 +365,18 @@ public class Game {
 				for (Player p : players) {
 					p.reset();
 				}
+				passCards = 1;
+				cardsPassed = new Card[players.length][3];
 				dealCards();
 			} else {
 				JOptionPane.showMessageDialog(frame, scores, "Current Scores", JOptionPane.INFORMATION_MESSAGE);
+				cardsPassed = new Card[players.length][3];
+				switch (passCards) {
+					case 0: passCards = 1; break;
+					case 1: passCards = 3; break;
+					case 3: passCards = 2; break;
+					default: passCards = 0; cardsPassed = null; break;
+				}
 				dealCards();
 			}
 		} else if (roundStarter != 0) {
@@ -362,6 +399,9 @@ public class Game {
 		playing = new Card[] { null, null, null, null };
 		endOfTrick = false;
 		
+		passCards = 1;
+		cardsPassed = new Card[players.length][3];
+		
 		cardRects = new ArrayList<>();
 		
 		display.setPreferredSize(new Dimension(800, 600));
@@ -378,6 +418,50 @@ public class Game {
 			public void mousePressed(MouseEvent m) {
 				if (endOfTrick) {
 					endOfTrick();
+				} else if (cardsPassed != null) {
+					int emptySlot = -1;
+					for (int i = 0; i < cardsPassed[0].length; ++i) {
+						if (cardsPassed[0][i] == null) {
+							emptySlot = i;
+							break;
+						}
+					}
+					boolean clicked = false;
+					for (int i = cardRects.size() - 1; i >= 0; --i) {
+						if (cardRects.get(i).contains(m.getPoint())) {
+							Card card = players[0].hand.get(i);
+							int selected = -1;
+							for (int j = 0; j < cardsPassed[0].length; ++j) {
+								if (card == cardsPassed[0][j]) {
+									selected = j;
+									break;
+								}
+							}
+							if (selected < 0 && emptySlot >= 0) {
+								cardsPassed[0][emptySlot] = card;
+							} else {
+								cardsPassed[0][selected] = null;
+							}
+							clicked = true;
+							break;
+						}
+					}
+					if (!clicked && emptySlot < 0) {
+						for (int i = 0; i < players.length; ++i) {
+							for (Card c : cardsPassed[i]) {
+								players[i].hand.remove(c);
+								int p = (i + passCards) % players.length;
+								players[p].addCard(c);
+								if (c.value == Card.Value.Two && c.color == Card.Color.Clubs) {
+									roundStarter = p;
+								}
+							}
+						}
+						cardsPassed = null;
+						if (roundStarter != 0) {
+							aiMoves(roundStarter);
+						}
+					}
 				} else if (playing[0] == null && (roundStarter == 0 || playing[3] != null)) {
 					for (int i = cardRects.size() - 1; i >= 0; --i) {
 						if (cardRects.get(i).contains(m.getPoint())) {
@@ -554,6 +638,38 @@ public class Game {
 		} else if (p + 1 != players.length) {
 			aiMoves(p + 1);
 		}
+	}
+	private void aiPass(int p) {
+		int index = cardsPassed[p].length - 1;
+		for (Card c : players[p].hand) {
+			if (c.color == Card.Color.Spades && c.value.ordinal() >= Card.Value.Queen.ordinal()) {
+				cardsPassed[p][index--] = c;
+				if (index < 0) { return; }
+			}
+		}
+		for (int v = Card.Value.values().length - 1; v >= 0; --v) {
+			for (Card c : players[p].hand) {
+				if (c.color == Card.Color.Hearts && c.value.ordinal() == v) {
+					cardsPassed[p][index--] = c;
+					if (index < 0) { return; }
+				}
+			}
+			for (Card c : players[p].hand) {
+				if (c.color != Card.Color.Spades && c.color != Card.Color.Hearts && c.value.ordinal() == v) {
+					cardsPassed[p][index--] = c;
+					if (index < 0) { return; }
+				}
+			}
+		}
+		for (int v = Card.Value.values().length - 1; v >= 0; --v) {
+			for (Card c : players[p].hand) {
+				if (c.color == Card.Color.Spades && c.value.ordinal() == v) {
+					cardsPassed[p][index--] = c;
+					if (index < 0) { return; }
+				}
+			}
+		}
+		throw new RuntimeException("ERROR: Unable to find cards to pass!!!");
 	}
 
 	public static void main(String[] args) {
