@@ -126,12 +126,16 @@ public class Game {
 		cardRects.clear();
 		int cardOff = (w - cardW * players[0].hand.size()) / 2;
 		int idx = 0;
+		g.setColor(new Color(0x3f000000, true));
 		for (Card card : players[0].hand) {
 			Rectangle r = new Rectangle(cardOff + cardW * (idx++), h - 2 * cardH, cardW, cardH);
 			cardRects.add(r);
 			g.drawImage(Toolkit.getDefaultToolkit().getImage(
 					"images/" + card.color.name().toLowerCase() + "_" + card.value.name().toLowerCase() + ".png"),
 				r.x, r.y, r.width, r.height, null);
+			if (!mayPlay(card, 0)) {
+				g.fill(r);
+			}
 		}
 		cardOff = (w + cardW * players[2].hand.size()) / 2;
 		idx = 0;
@@ -243,6 +247,9 @@ public class Game {
 		return true;
 	}
 	public boolean mayPlay(Card c, int plNum) {
+		if (endOfTrick) {
+			return false;
+		}
 		if (plNum == roundStarter) {
 			if (isFirstRound()) {
 				return c.value == Card.Value.Two && c.color == Card.Color.Clubs;
@@ -263,6 +270,9 @@ public class Game {
 				}
 			}
 			return true;
+		}
+		if (playing[roundStarter] == null || playing[(plNum + playing.length - 1) % playing.length] == null) {
+			return false;
 		}
 
 		final Card.Color leading = playing[roundStarter].color;
@@ -344,7 +354,7 @@ public class Game {
 		display = new JLabel();
 		
 		players = new Player[] {
-			new Player("Benedikt"),
+			new Player("You"),
 			new Player("West"),
 			new Player("North"),
 			new Player("East")
