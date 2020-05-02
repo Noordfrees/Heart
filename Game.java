@@ -229,6 +229,68 @@ public class Game {
 		}
 	}
 	
+	public boolean isFirstRound() {
+		for (Card c : playing) {
+			if (c != null && c.value == Card.Value.Two && c.color == Card.Color.Clubs) {
+				return true;
+			}
+		}
+		for (Player p : players) {
+			if (!p.taken.isEmpty()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	public boolean mayPlay(Card c, int plNum) {
+		if (plNum == roundStarter) {
+			if (isFirstRound()) {
+				return c.value == Card.Value.Two && c.color == Card.Color.Clubs;
+			}
+			if (c.color != Card.Color.Hearts) {
+				return true;
+			}
+			for (Player p : players) {
+				for (Card card : p.taken) {
+					if (card.color == Card.Color.Hearts) {
+						return true;
+					}
+				}
+			}
+			for (Card card : players[plNum].hand) {
+				if (card.color != Card.Color.Hearts) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		final Card.Color leading = playing[roundStarter].color;
+		if (c.color == leading) {
+			return true;
+		}
+		for (Card card : players[plNum].hand) {
+			if (card.color == leading) {
+				return false;
+			}
+		}
+		if (!isFirstRound()) {
+			return true;
+		}
+		if (c.color == Card.Color.Spades && c.value == Card.Value.Queen) {
+			return false;
+		}
+		if (c.color != Card.Color.Hearts) {
+			return true;
+		}
+		for (Card card : players[plNum].hand) {
+			if (card.color != Card.Color.Hearts && (c.color != Card.Color.Spades || c.value != Card.Value.Queen)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	private void endOfTrick() {
 		endOfTrick = false;
 		for (int i = 0; i < playing.length; ++i) {
@@ -310,60 +372,16 @@ public class Game {
 					for (int i = cardRects.size() - 1; i >= 0; --i) {
 						if (cardRects.get(i).contains(m.getPoint())) {
 							Card card = players[0].hand.get(i);
-							if (i != 0 && players[0].hand.get(0).value == Card.Value.Two && players[0].hand.get(0).color == Card.Color.Clubs) {
-								continue;  // NOT ALLOWED to start the first trick with anything other than the two of clubs
-							}
-							if (card.value != Card.Value.Two || card.color != Card.Color.Clubs) {
-								if (roundStarter == 0) {
-									if (card.color == Card.Color.Hearts) {
-										boolean haveOtherThanHearts = false;
-										for (Card c : players[0].hand) {
-											if (c.color != Card.Color.Hearts) {
-												haveOtherThanHearts = true;
-												break;
-											}
-										}
-										if (haveOtherThanHearts) {
-											int heartsLeftTotal = 0;
-											for (Player p : players) {
-												for (Card c : p.hand) {
-													if (c.color == Card.Color.Hearts) {
-														++heartsLeftTotal;
-													}
-												}
-											}
-											if (heartsLeftTotal > 12) {
-												continue;  // NOT ALLOWED to play hearts before hearts are broken when we have non-heart cards
-											}
-										}
-									}
+							if (mayPlay(card, 0)) {
+								playing[0] = card;
+								players[0].hand.remove(card);
+								if (playing[1] != null) {
+									endOfTrick = true;
 								} else {
-									if (card.color != playing[roundStarter].color) {
-										boolean haveLeading = false;
-										for (Card c : players[0].hand) {
-											if (c.color == playing[roundStarter].color) {
-												haveLeading = true;
-												break;
-											}
-										}
-										if (haveLeading) {
-											continue;  // NOT ALLOWED to play another color if we have the leading color
-										}
-										if ((playing[roundStarter].value == Card.Value.Two && playing[roundStarter].color == Card.Color.Clubs) &&
-												(card.color == Card.Color.Hearts || (card.color == Card.Color.Spades && card.value == Card.Value.Queen))) {
-											continue;  // NOT ALLOWED to play point cards in the first round
-										}
-									}
+									aiMoves(1);
 								}
+								break;
 							}
-							playing[0] = card;
-							players[0].hand.remove(card);
-							if (playing[1] != null) {
-								endOfTrick = true;
-							} else {
-								aiMoves(1);
-							}
-							break;
 						}
 					}
 				}
