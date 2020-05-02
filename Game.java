@@ -418,8 +418,42 @@ public class Game {
 
 		Card cardToPlay = null;
 		if (roundStarter == p) {
-			// NOCOM
-			cardToPlay = players[p].hand.get(0);
+			if (isFirstRound()) {
+				cardToPlay = players[p].hand.get(0);
+			} else {
+				boolean haveHighSpades = false;
+				Card highestLowSpade = null;
+				Card lowestNonSpade = null;
+				for (Card c : players[p].hand) {
+					if (!mayPlay(c, p)) { continue; }
+					if (c.color == Card.Color.Spades) {
+						if (c.value.ordinal() >= Card.Value.Queen.ordinal()) {
+							haveHighSpades = true;
+						} else if (highestLowSpade == null || c.value.ordinal() > highestLowSpade.value.ordinal()) {
+							highestLowSpade = c;
+						}
+					} else if (lowestNonSpade == null || c.value.ordinal() < lowestNonSpade.value.ordinal()) {
+						lowestNonSpade = c;
+					}
+				}
+				if (haveHighSpades) {
+					if (lowestNonSpade != null) {
+						cardToPlay = lowestNonSpade;
+					} else {
+						for (Card c : players[p].hand) {
+							if (mayPlay(c, p)) {
+								cardToPlay = c;
+							}
+						}
+					}
+				} else if (highestLowSpade != null) {
+					cardToPlay = highestLowSpade;
+				} else if (lowestNonSpade != null) {
+					cardToPlay = lowestNonSpade;
+				} else {
+					cardToPlay = players[p].hand.get(0);
+				}
+			}
 		} else {
 			boolean canFollow = false;
 			for (Card c : players[p].hand) {
@@ -456,7 +490,9 @@ public class Game {
 						}
 					}
 				}
-				if (highestBelowValue != null) {
+				if (isFirstRound()) {
+					cardToPlay = highestOwn;
+				} else if (highestBelowValue != null) {
 					cardToPlay = highestBelowValue;
 				} else if (cardsMissing > 1) {
 					cardToPlay = lowestOwn;
