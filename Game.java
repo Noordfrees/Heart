@@ -128,11 +128,12 @@ public class Game {
 		if (imageCache.containsKey(name)) return imageCache.get(name);
 
 		try {
-			BufferedImage img = ImageIO.read(new File(name));
+			BufferedImage img = ImageIO.read(Game.class.getClassLoader().getResource(name));
 			imageCache.put(name, img);
 			return img;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			JOptionPane.showMessageDialog(frame, "Unable to load image '" + name + "':\n\n" + e, "Error", JOptionPane.ERROR_MESSAGE);
+			System.exit(1);
 		}
 		return null;
 	}
@@ -169,7 +170,7 @@ public class Game {
 			Rectangle r = new Rectangle(cardOff + cardW * (idx++), h - 2 * cardH - (sel ? cardH / 3 : 0), cardW, cardH);
 			cardRects.add(r);
 			g.drawImage(getImage(
-					"images/" + card.color.name().toLowerCase() + "_" + card.value.name().toLowerCase() + ".png"),
+					card.color.name().toLowerCase() + "_" + card.value.name().toLowerCase() + ".png"),
 				r.x, r.y, r.width, r.height, null);
 			if (cardsPassed == null ? !mayPlay(card, 0) : (allSel && !sel)) {
 				g.fill(r);
@@ -179,20 +180,20 @@ public class Game {
 		idx = 0;
 		for (Card card : players[2].hand) {
 			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[2]) { if (card == c) { sel = true; break; }}}
-			g.drawImage(getImage("images/bg.png"), cardOff - cardW * (++idx), cardH + (sel ? cardH / 3 : 0), cardW, cardH, null);
+			g.drawImage(getImage("bg.png"), cardOff - cardW * (++idx), cardH + (sel ? cardH / 3 : 0), cardW, cardH, null);
 		}
 		cardOff = (2 * h - cardH * players[1].hand.size()) / 4;
 		idx = 0;
 		for (Card card : players[1].hand) {
 			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[1]) { if (card == c) { sel = true; break; }}}
-			g.drawImage(getImage("images/bg.png"), cardW + (sel ? cardW / 3 : 0),
+			g.drawImage(getImage("bg.png"), cardW + (sel ? cardW / 3 : 0),
 					cardOff + cardH * (idx++) / 2, cardW, cardH, null);
 		}
 		cardOff = (2 * h + cardH * players[3].hand.size()) / 4;
 		idx = 0;
 		for (Card card : players[3].hand) {
 			boolean sel = false; if (cardsPassed != null) { for (Card c : cardsPassed[3]) { if (card == c) { sel = true; break; }}}
-			g.drawImage(getImage("images/bg.png"), w - 2 * cardW - (sel ? cardW / 3 : 0),
+			g.drawImage(getImage("bg.png"), w - 2 * cardW - (sel ? cardW / 3 : 0),
 					cardOff - cardH * (++idx) / 2, cardW, cardH, null);
 		}
 
@@ -256,7 +257,7 @@ public class Game {
 			g.draw(playingPos[i]);
 			if (playing[i] != null) {
 				g.drawImage(getImage(
-						"images/" + playing[i].color.name().toLowerCase() + "_" + playing[i].value.name().toLowerCase() + ".png"),
+						playing[i].color.name().toLowerCase() + "_" + playing[i].value.name().toLowerCase() + ".png"),
 					playingPos[i].x, playingPos[i].y, playingPos[i].width, playingPos[i].height, null);
 			}
 		}
@@ -483,7 +484,7 @@ public class Game {
 
 	public Game() {
 
-		frame = new JFrame("Heart");
+		frame = new JFrame("Heart 0.1");
 		display = new JLabel();
 
 		players = new Player[] {

@@ -1,1 +1,7 @@
+/bin
 *.class
+
+/debian/.debhelper
+/debian/files
+/debian/heart.substvars
+/debian/heart

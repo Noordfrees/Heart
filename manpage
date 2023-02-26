@@ -1,15 +1,16 @@
-# Heart
-Yet another Hearts-like game. Written in Java.
+.TH HEART "6" "February 2023" "Heart 0.1" "User Commands"
+.SH NAME
+heart \- Card game against the computer about avoiding having to take rounds
+.SH SYNOPSIS
+.B heart
 
-## Getting Started
+.SH "DESCRIPTION"
 
-Clone or download the repository and run `make run` to compile and start the game.
+Card game against the computer about avoiding having to take rounds.
 
-On typical Linux systems, you can optionally install it system-wide using `sudo make install` and then start it with `heart`.
+In this implementation, you play against three moderately skillful computer players.
 
-You need to have a Java Development Kit, version 8 or later, installed in order to compile. I recommend OpenJDK.
-
-## The Game
+.SH "LONG DESCRIPTION"
 
 Heart is a card game for four players with the aim of gaining as *few* points as possible. The game is played over several rounds until one or more players reach 100 points.
 
@@ -22,22 +23,23 @@ There are some exceptions to these rules:
 - You may not use a Heart card to start a trick, unless hearts have been played already in this round or you have nothing but Hearts left.
 - If a player manages to take all fourteen point cards in a round, he gets not +26 but -26 points (‘Shooting the Moon’). If he manages to take *all* tricks of the round, he gets another -26 points, totalling -52 points (‘Shooting the Sun’). Be aware that attempting to shoot the moon or sun is a rewarding but risky strategy – if even one point card escapes you, you will get many malus points instead of the hoped-for bonus…
 
----
-
 You can see the score of each player as well as the number of points they are gaining in the current round next to their names. You control the southern player; the others are controlled by computer players.
 
-## Website
+.SH "MORE INFORMATION"
+The website can be found at
+.IP
+https://github.com/Noordfrees/Heart
+.PP
+Please report bugs and feature requests at
+.IP
+https://github.com/Noordfrees/Heart/issues
+.PP
 
-[Repository](https://github.com/Noordfrees/Heart)
+.SH AUTHORS
 
-[Bug reports go here](https://github.com/Noordfrees/Heart/issues)
+Created by Benedikt Straub (@Noordfrees on GitHub) in his spare time. I hope you like my work.
 
-## Credits
-
-Created by [Benedikt Straub (@Noordfrees)](https://github.com/Noordfrees) in his spare time. I hope you like my work.
-
-The card images are edited versions of a card set distributed with [Aisleriot](https://wiki.gnome.org/Apps/Aisleriot).
-
-## License
-
-GPL3. See the file [LICENSE](https://github.com/Noordfrees/Heart/blob/master/LICENSE) for details.
+The card images are edited versions of a card set distributed with Aisleriot
+.IP
+https://wiki.gnome.org/Apps/Aisleriot
+.PP

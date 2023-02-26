@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Heart
+Name[de]=Heart
+Name[nds]=Heart
+Comment=Card game against the computer about avoiding having to take rounds
+Comment[de]=Kartenspiel gegen den Computer, in dem man es vermeiden soll, Punkte zu erhalten
+Comment[nds]=Kaartenspeel tegen de Reekner, waar man uppassen sall, dat man keene Punkten kriggt
+Exec=/usr/games/heart
+Icon=/usr/share/games/heart/images/hearts_king.png
+Categories=Game;CardGame;
+Terminal=false
