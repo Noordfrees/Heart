@@ -9,10 +9,11 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class Game {
-	
+	public static final int kPointsToEnd = 100;
+
 	private final JFrame frame;
 	private final JLabel display;
-	
+
 	public static class Card {
 		public static enum Color {
 			Clubs,
@@ -42,18 +43,27 @@ public class Game {
 			value = v;
 		}
 	}
-	
+
 	public class Player {
 		public final String name;
 		public final ArrayList<Card> hand;
 		public final ArrayList<Card> taken;
 		private long points;
+
 		public Player(String n) {
 			name = n;
 			points = 0;
 			hand = new ArrayList<>();
 			taken = new ArrayList<>();
 		}
+
+		public boolean shotTheSun() {
+			return taken.size() == Card.Color.values().length * Card.Value.values().length;
+		}
+		public boolean shotTheMoon() {
+			return pendingPoints() == -26;
+		}
+
 		public long pendingPoints() {
 			if (taken.isEmpty()) {
 				return 0;
@@ -70,13 +80,20 @@ public class Game {
 			}
 			return p == 26 ? -26 : p;
 		}
+
 		public long getPoints() {
 			return points;
 		}
+
 		public void fetchPoints() {
-			points += pendingPoints();
+			fetchPoints(pendingPoints());
+		}
+
+		public void fetchPoints(long delta) {
+			points += delta;
 			taken.clear();
 		}
+
 		public void addCard(Card card) {
 			final int len = hand.size();
 			for (int i = 0; i < len; ++i) {
@@ -88,32 +105,33 @@ public class Game {
 			}
 			hand.add(card);
 		}
+
 		public void reset() {
 			points = 0;
 			hand.clear();
 			taken.clear();
 		}
 	}
-	
+
 	private final Player[] players;
 	private int roundStarter;
 	private final Card[] playing;
 	private boolean endOfTrick;
-	
+
 	private int passCards;
 	private Card[][] cardsPassed;
-	
+
 	private ArrayList<Rectangle> cardRects;
-	
+
 	public synchronized void draw() {
-		
+
 		int w = display.getWidth();
 		int h = display.getHeight();
 		int whm = Math.max(w, h);
-		
+
 		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g = img.createGraphics();
-		
+
 		for (int i = 0; i < whm * 2; i++) {
 			int c = 255 * i / (whm * 2);
 			g.setColor(new Color(c, c, c));
@@ -122,10 +140,10 @@ public class Game {
 			else
 				g.drawLine(i * w / h, 0, 0, i);
 		}
-		
+
 		final int cardH = h / 8;
 		final int cardW = cardH * 164 / 256;
-		
+
 		cardRects.clear();
 		int cardOff = (w - cardW * players[0].hand.size()) / 2;
 		int idx = 0;
@@ -163,7 +181,7 @@ public class Game {
 			g.drawImage(Toolkit.getDefaultToolkit().getImage("images/bg.png"), w - 2 * cardW - (sel ? cardW / 3 : 0),
 					cardOff - cardH * (++idx) / 2, cardW, cardH, null);
 		}
-		
+
 		int activePlayer = -1;
 		if (playing[roundStarter] == null) {
 			activePlayer = roundStarter;
@@ -192,7 +210,7 @@ public class Game {
 			g.setColor(new Color(0xcccccc));
 			g.drawString(str, p.x, p.y);
 		}
-		
+
 		Rectangle[] playingPos = new Rectangle[] {
 			new Rectangle((w - cardW) / 2, (h + cardH) / 2, cardW, cardH),
 			new Rectangle((w - 4 * cardW) / 2, (h - cardH) / 2, cardW, cardH),
@@ -228,11 +246,11 @@ public class Game {
 					playingPos[i].x, playingPos[i].y, playingPos[i].width, playingPos[i].height, null);
 			}
 		}
-		
+
 		display.setIcon(new ImageIcon(img));
-		
+
 	}
-	
+
 	private void dealCards() {
 		ArrayList<Card> cards = new ArrayList<>();
 		for (Card.Color c : Card.Color.values()) {
@@ -260,7 +278,7 @@ public class Game {
 			aiMoves(roundStarter);
 		}
 	}
-	
+
 	public boolean isFirstRound() {
 		for (Card c : playing) {
 			if (c != null && c.value == Card.Value.Two && c.color == Card.Color.Clubs) {
@@ -328,27 +346,91 @@ public class Game {
 		}
 		return true;
 	}
-	
+
 	private void endOfTrick() {
 		endOfTrick = false;
+
 		for (int i = 0; i < playing.length; ++i) {
 			if (playing[i].color == playing[roundStarter].color && playing[i].value.ordinal() > playing[roundStarter].value.ordinal()) {
 				roundStarter = i;
 			}
 		}
+
 		for (int i = 0; i < playing.length; ++i) {
 			players[roundStarter].taken.add(playing[i]);
 			playing[i] = null;
 		}
+
 		draw();
+
 		if (players[roundStarter].hand.isEmpty()) {
 			boolean gameOver = false;
-			String scores = "";
+
+			Player shooter = null;
 			for (Player p : players) {
-				p.fetchPoints();
-				gameOver |= p.getPoints() >= 100;
-				scores += p.name + ": " + p.getPoints() + "\n";
+				if (p.shotTheSun() || p.shotTheMoon()) {
+					shooter = p;
+					break;
+				}
 			}
+			if (shooter == null) {
+				for (Player p : players) {
+					p.fetchPoints();
+				}
+			} else {
+				final long curPoints = shooter.getPoints();
+				final long delta = shooter.shotTheSun() ? 52 : 26;
+				boolean gameWouldEnd = false;
+				boolean wouldLose = false;
+				for (Player p : players) {
+					if (p != shooter) {
+						gameWouldEnd |= p.getPoints() + delta >= kPointsToEnd;
+						wouldLose |= p.getPoints() + delta <= curPoints;
+					}
+				}
+				if (gameWouldEnd && wouldLose) {
+					for (Player p : players) {
+						if (p == shooter) {
+							p.fetchPoints(-delta);
+						} else {
+							p.fetchPoints(0);
+						}
+					}
+				} else {
+					for (Player p : players) {
+						if (p != shooter) {
+							p.fetchPoints(delta);
+						} else {
+							p.fetchPoints(0);
+						}
+					}
+				}
+			}
+
+			Integer[] playerIndicesSorted = new Integer[players.length];
+			for (int i = 0; i < players.length; ++i) {
+				gameOver |= players[i].getPoints() >= kPointsToEnd;
+				playerIndicesSorted[i] = i;
+			}
+			Arrays.sort(playerIndicesSorted, (a, b) -> {
+				if (players[a].getPoints() != players[b].getPoints()) return players[a].getPoints() < players[b].getPoints() ? -1 : 1;
+				return a == b ? 0 : a < b ? -1 : 1;
+			});
+			String scores = "";
+			int realRank = 1;
+			int lastRank = 1;
+			long lastPoints = 0;
+			for (int index : playerIndicesSorted) {
+				if (realRank == 1 || lastPoints != players[index].getPoints()) {
+					lastRank = realRank;
+				}
+
+				scores += lastRank + ") " + players[index].name + ": " + players[index].getPoints() + "\n";
+
+				++realRank;
+				lastPoints = players[index].getPoints();
+			}
+
 			if (gameOver) {
 				int lowestScore = 0;
 				for (int i = 0; i < players.length; ++i) {
@@ -357,7 +439,7 @@ public class Game {
 					}
 				}
 				if (JOptionPane.YES_OPTION != JOptionPane.showConfirmDialog(frame,
-						"The game is over and " + players[lowestScore].name + " has won!\n\n" + scores + "\nAnother game?",
+						"The game is over and " + (lowestScore == 0 ? "you have won!" : (players[lowestScore].name + " has won!")) + "\n\n" + scores + "\nAnother game?",
 						"Game Over", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE)) {
 					System.exit(0);
 					return;
@@ -384,12 +466,12 @@ public class Game {
 		}
 		draw();
 	}
-	
+
 	public Game() {
-		
+
 		frame = new JFrame("Heart");
 		display = new JLabel();
-		
+
 		players = new Player[] {
 			new Player("You"),
 			new Player("West"),
@@ -398,19 +480,19 @@ public class Game {
 		};
 		playing = new Card[] { null, null, null, null };
 		endOfTrick = false;
-		
+
 		passCards = 1;
 		cardsPassed = new Card[players.length][3];
-		
+
 		cardRects = new ArrayList<>();
-		
+
 		display.setPreferredSize(new Dimension(800, 600));
-		
+
 		frame.add(display);
 		display.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
-				
-				
+
+
 				draw();
 			}
 		});
@@ -484,7 +566,7 @@ public class Game {
 		});
 		display.addMouseMotionListener(new MouseAdapter() {
 			public void mouseMoved(MouseEvent m) {
-				
+
 			}
 		});
 		display.addComponentListener(new ComponentAdapter() {
@@ -502,7 +584,7 @@ public class Game {
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		
+
 		dealCards();
 	}
 
@@ -675,5 +757,5 @@ public class Game {
 	public static void main(String[] args) {
 		new Game();
 	}
-	
+
 }
