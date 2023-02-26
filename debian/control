@@ -8,7 +8,7 @@ Build-Depends: debhelper-compat(=13), openjdk-17-jdk | openjdk-11-jdk | default-
 
 Package: heart
 Architecture: all
-Depends: ${misc:Depends}, openjdk-17-jre | openjdk-11-jre | java-runtime
+Depends: ${misc:Depends}, jarwrapper, openjdk-17-jre | openjdk-11-jre | java-runtime
 Description: Card game about avoiding having to take rounds
  Heart is a card game for four players with the aim of gaining as
  *few* points as possible. The game is played over several rounds
