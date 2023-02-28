@@ -9,14 +9,14 @@ MANPAGE     := $(MANDIR)/heart.6
 
 .PHONY: run clean uninstall
 
+bin/Heart.jar: bin/Game.class
+	jar cfe bin/Heart.jar Game -C bin . -C images .
+	chmod +x bin/Heart.jar
+
 bin/Game.class: Game.java
 	if [ -d bin ]; then rm -r bin; fi
 	mkdir bin
 	javac -d bin Game.java
-
-bin/Heart.jar: bin/Game.class
-	jar cfe bin/Heart.jar Game -C bin . -C images .
-	chmod +x bin/Heart.jar
 
 run: bin/Game.class
 	java -cp bin:images Game

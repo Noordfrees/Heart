@@ -3,12 +3,13 @@ Maintainer: Benedikt Straub <benedikt-straub@web.de>
 Homepage: https://github.com/Noordfrees/Heart
 Section: games
 Priority: optional
-Standards-Version: 4.6.2.0
-Build-Depends: debhelper-compat(=13), openjdk-17-jdk | openjdk-11-jdk | default-jdk
+Standards-Version: 4.6.1.0
+Rules-Requires-Root: no
+Build-Depends: debhelper-compat(=13), openjdk-11-jdk | openjdk-17-jdk | default-jdk
 
 Package: heart
 Architecture: all
-Depends: ${misc:Depends}, jarwrapper, openjdk-17-jre | openjdk-11-jre | java-runtime
+Depends: ${misc:Depends}, jarwrapper, openjdk-11-jre | openjdk-17-jre | java-runtime
 Description: Card game about avoiding having to take rounds
  Heart is a card game for four players with the aim of gaining as
  *few* points as possible. The game is played over several rounds
