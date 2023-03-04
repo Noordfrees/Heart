@@ -1,5 +1,11 @@
-heart (0.1) UNRELEASED; urgency=medium
+heart (0.1-2) unstable; urgency=low
 
-  * Initial release of Hearts v0.1
+  * Updated copyright notice and fixed lintiam warnings
+
+ -- Benedikt Straub <benedikt-straub@web.de>  Sat, 04 Mar 2023 17:40:00 +0100
+
+heart (0.1-1) UNRELEASED; urgency=medium
+
+  * Initial release of Hearts v0.1 (Closes: #1032026)
 
  -- Benedikt Straub <benedikt-straub@web.de>  Sun, 26 Feb 2023 16:08:06 +0100
